@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -11,53 +11,6 @@ import {
   Hash,
   Link as LinkIcon,
 } from "lucide-react";
-
-/* ==========================================================================
-   MOCK DATA
-   ========================================================================== */
-const initialResources = [
-  {
-    id: 1,
-    title: "Algorithm Visualizer",
-    description:
-      "Interactive web tool that animates sorting, searching, and graph algorithms step-by-step.",
-    subject: "Data Structures",
-    topic: "Algorithms",
-    type: "Interactive",
-    url: "https://algorithm-visualizer.org/",
-    // We use a CSS gradient class to simulate a dynamic visualizer thumbnail
-    visualizerBg: "from-fuchsia-600 to-purple-600",
-  },
-  {
-    id: 2,
-    title: "CS50: Memory & Pointers",
-    description:
-      "Harvard's deep dive into memory management, pointers, and memory leaks in C.",
-    subject: "Computer Science",
-    topic: "Memory",
-    type: "Video",
-    url: "https://youtube.com/watch?v=s5RNC-v1yfw",
-    visualizerBg: "from-red-500 to-orange-500",
-  },
-  {
-    id: 3,
-    title: "Tailwind CSS Documentation",
-    description:
-      "Official docs for utility-first CSS framework. Crucial for frontend styling and layout.",
-    subject: "Web Development",
-    topic: "CSS",
-    type: "Article",
-    url: "https://tailwindcss.com/docs",
-    visualizerBg: "from-cyan-500 to-blue-600",
-  },
-];
-
-const subjectsList = [
-  "All",
-  "Data Structures",
-  "Computer Science",
-  "Web Development",
-];
 
 /* ==========================================================================
    HELPER FUNCTIONS
@@ -77,11 +30,68 @@ const getTypeIcon = (type) => {
 /* ==========================================================================
    MAIN COMPONENT
    ========================================================================== */
-export const ResourcesPage = () => {
-  const [resources, setResources] = useState(initialResources);
+export const ResourcePage = () => {
+  const [resources, setResources] = useState([]);
   const [activeSubject, setActiveSubject] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
+
+  // Form state for adding new resources
+  const [newResource, setNewResource] = useState({
+    url: "",
+    title: "",
+    type: "",
+    subject: "",
+    topic: "",
+    description: "",
+  });
+
+  // 1. Fetch data from backend
+  const loadResources = () => {
+    fetch("http://localhost:5000/api/resources")
+      .then((res) => res.json())
+      .then((data) => setResources(data))
+      .catch((err) => console.error("Failed to load resources", err));
+  };
+
+  useEffect(() => {
+    loadResources();
+  }, []);
+
+  // 2. Handle form submission
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewResource((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveResource = () => {
+    if (!newResource.title || !newResource.url || !newResource.type) return;
+
+    fetch("http://localhost:5000/api/resources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newResource),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          loadResources(); // Refresh grid
+          setIsAddOpen(false); // Close form
+          setNewResource({
+            url: "",
+            title: "",
+            type: "",
+            subject: "",
+            topic: "",
+            description: "",
+          }); // Reset form
+        }
+      })
+      .catch((err) => console.error("Failed to save resource", err));
+  };
+
+  // Dynamically generate subject filters based on fetched data
+  const subjectsList = ["All", ...new Set(resources.map((r) => r.subject))];
 
   // Filter logic
   const filteredResources = resources.filter((res) => {
@@ -146,7 +156,6 @@ export const ResourcesPage = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* URL Input (Primary focus) */}
               <div className="col-span-1 md:col-span-2 relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <span className="text-slate-500 font-mono text-sm">
@@ -155,6 +164,9 @@ export const ResourcesPage = () => {
                 </div>
                 <input
                   type="url"
+                  name="url"
+                  value={newResource.url}
+                  onChange={handleInputChange}
                   placeholder="Paste website, YouTube, or tool link here..."
                   className="w-full pl-16 pr-4 py-3 bg-[#1A1D2D] border border-[#6C5DD3]/50 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors shadow-[0_0_15px_rgba(108,93,211,0.1)]"
                 />
@@ -162,12 +174,20 @@ export const ResourcesPage = () => {
 
               <input
                 type="text"
+                name="title"
+                value={newResource.title}
+                onChange={handleInputChange}
                 placeholder="Title of Resource"
                 className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3]"
               />
 
-              <select className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-slate-300 focus:outline-none focus:border-[#6C5DD3] appearance-none">
-                <option value="" disabled selected>
+              <select
+                name="type"
+                value={newResource.type}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-slate-300 focus:outline-none focus:border-[#6C5DD3] appearance-none"
+              >
+                <option value="" disabled>
                   Select Resource Type...
                 </option>
                 <option value="Video">Video / Tutorial</option>
@@ -179,17 +199,26 @@ export const ResourcesPage = () => {
 
               <input
                 type="text"
+                name="subject"
+                value={newResource.subject}
+                onChange={handleInputChange}
                 placeholder="Subject (e.g., Mathematics)"
                 className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3]"
               />
               <input
                 type="text"
+                name="topic"
+                value={newResource.topic}
+                onChange={handleInputChange}
                 placeholder="Topic (e.g., Calculus)"
                 className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3]"
               />
 
               <div className="col-span-1 md:col-span-2">
                 <textarea
+                  name="description"
+                  value={newResource.description}
+                  onChange={handleInputChange}
                   placeholder="Describe why this resource is useful..."
                   rows="2"
                   className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] resize-none"
@@ -197,7 +226,10 @@ export const ResourcesPage = () => {
               </div>
 
               <div className="col-span-1 md:col-span-2 flex justify-end">
-                <button className="px-8 py-2.5 bg-[#6C5DD3] text-white rounded-xl text-sm font-semibold hover:bg-[#5a4db8] transition-colors">
+                <button
+                  onClick={handleSaveResource}
+                  className="px-8 py-2.5 bg-[#6C5DD3] text-white rounded-xl text-sm font-semibold hover:bg-[#5a4db8] transition-colors"
+                >
                   Save Resource
                 </button>
               </div>
@@ -233,26 +265,18 @@ export const ResourcesPage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 key={res.id}
-                className="group bg-[#25283B] rounded-2xl overflow-hidden border border-white/5 hover:border-[#6C5DD3]/50 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(108,93,211,0.15)] transition-all cursor-pointer flex flex-col h-[340px]"
+                className="group bg-[#25283B] rounded-2xl overflow-hidden border border-white/5 hover:border-[#6C5DD3]/50 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(108,93,211,0.15)] transition-all cursor-pointer flex flex-col h-85"
               >
-                {/* Visualizer Area (Replaces complex iframes with styled dynamic headers) */}
                 <div
-                  className={`h-36 w-full bg-gradient-to-br ${res.visualizerBg} relative flex items-center justify-center`}
+                  className={`h-36 w-full bg-linear-to-br ${res.visualizerBg} relative flex items-center justify-center`}
                 >
-                  {/* Subtle overlay pattern */}
                   <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
-
-                  {/* Type Icon */}
                   <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-300">
                     {getTypeIcon(res.type)}
                   </div>
-
-                  {/* Type Badge */}
                   <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-white/90">
                     {res.type}
                   </div>
-
-                  {/* Play/Open Overlay on Hover */}
                   <div className="absolute inset-0 bg-[#1A1D2D]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm z-20">
                     <span className="flex items-center gap-2 bg-[#6C5DD3] text-white px-4 py-2 rounded-full font-bold text-sm">
                       Open Resource <ExternalLink className="w-4 h-4" />
@@ -260,9 +284,7 @@ export const ResourcesPage = () => {
                   </div>
                 </div>
 
-                {/* Content Area */}
                 <div className="p-6 flex flex-col flex-1 bg-[#25283B]">
-                  {/* Tags */}
                   <div className="flex gap-2 flex-wrap mb-3">
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20">
                       <BookOpen className="w-3 h-3" /> {res.subject}
@@ -271,8 +293,6 @@ export const ResourcesPage = () => {
                       <Hash className="w-3 h-3" /> {res.topic}
                     </span>
                   </div>
-
-                  {/* Text */}
                   <h3 className="text-lg font-bold text-white mb-2 leading-tight group-hover:text-[#6C5DD3] transition-colors">
                     {res.title}
                   </h3>

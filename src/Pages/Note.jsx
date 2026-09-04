@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   UploadCloud,
@@ -12,61 +12,59 @@ import {
   FileDown,
 } from "lucide-react";
 
-/* ==========================================================================
-   MOCK DATA
-   ========================================================================== */
-const initialNotes = [
-  {
-    id: 1,
-    title: "Graph Theory Algorithms",
-    description:
-      "Detailed walkthrough of Dijkstra's, A*, and Bellman-Ford algorithms with code snippets and time complexity analysis.",
-    subject: "Data Structures",
-    topic: "Algorithms",
-    date: "Dec 10, 2024",
-    pdfUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", // Dummy PDF for demo
-  },
-  {
-    id: 2,
-    title: "Thermodynamics Laws",
-    description:
-      "Summary of the 4 laws of thermodynamics, entropy calculations, and real-world engine efficiency examples.",
-    subject: "Physics",
-    topic: "Thermal Dynamics",
-    date: "Dec 12, 2024",
-    pdfUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-  },
-  {
-    id: 3,
-    title: "React Hooks Cheat Sheet",
-    description:
-      "Personal notes on useEffect lifecycle, custom hooks creation, and state management optimization.",
-    subject: "Web Development",
-    topic: "React",
-    date: "Dec 18, 2024",
-    pdfUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-  },
-];
-
-const subjectsList = [
-  "All",
-  "Data Structures",
-  "Physics",
-  "Web Development",
-  "Mathematics",
-];
-
-/* ==========================================================================
-   MAIN COMPONENT
-   ========================================================================== */
 export const NotesPage = () => {
-  const [notes, setNotes] = useState(initialNotes);
+  const [notes, setNotes] = useState([]);
   const [activeSubject, setActiveSubject] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  // Form state for adding new notes
+  const [newNote, setNewNote] = useState({
+    title: "",
+    subject: "",
+    topic: "",
+    description: "",
+  });
+
+  // 1. Fetch data from backend on mount
+  const loadNotes = () => {
+    fetch("http://localhost:5000/api/notes")
+      .then((res) => res.json())
+      .then((data) => setNotes(data))
+      .catch((err) => console.error("Failed to load notes", err));
+  };
+
+  useEffect(() => {
+    loadNotes();
+  }, []);
+
+  // 2. Handle form submission
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewNote((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveNote = () => {
+    if (!newNote.title || !newNote.subject || !newNote.topic) return; // Simple validation
+
+    fetch("http://localhost:5000/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newNote),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          loadNotes(); // Refresh grid
+          setIsUploadOpen(false); // Close form
+          setNewNote({ title: "", subject: "", topic: "", description: "" }); // Reset form
+        }
+      })
+      .catch((err) => console.error("Failed to save note", err));
+  };
+
+  // Dynamically generate subject filters based on fetched data
+  const subjectsList = ["All", ...new Set(notes.map((n) => n.subject))];
 
   // Filter logic
   const filteredNotes = notes.filter((note) => {
@@ -79,7 +77,6 @@ export const NotesPage = () => {
   });
 
   return (
-    // Outer scrollable container with custom scrollbars
     <div
       className="
       flex-1 h-full bg-[#1A1D2D] text-white font-sans p-8 overflow-y-auto
@@ -138,7 +135,7 @@ export const NotesPage = () => {
             </h3>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Drag & Drop Zone (Visual only for prototype) */}
+              {/* Drag & Drop Zone */}
               <div className="lg:col-span-1 border-2 border-dashed border-slate-600 rounded-xl bg-[#1A1D2D] hover:border-[#6C5DD3] transition-colors flex flex-col items-center justify-center p-8 cursor-pointer group">
                 <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-4 group-hover:bg-[#6C5DD3]/20 transition-colors">
                   <FileDown className="w-6 h-6 text-slate-400 group-hover:text-[#6C5DD3]" />
@@ -153,28 +150,43 @@ export const NotesPage = () => {
               <div className="lg:col-span-2 space-y-4">
                 <input
                   type="text"
+                  name="title"
+                  value={newNote.title}
+                  onChange={handleInputChange}
                   placeholder="Note Title (e.g., Chapter 4 Summary)"
                   className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                 />
                 <div className="flex gap-4">
                   <input
                     type="text"
+                    name="subject"
+                    value={newNote.subject}
+                    onChange={handleInputChange}
                     placeholder="Subject (e.g., Physics)"
                     className="w-1/2 px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                   />
                   <input
                     type="text"
+                    name="topic"
+                    value={newNote.topic}
+                    onChange={handleInputChange}
                     placeholder="Topic (e.g., Thermodynamics)"
                     className="w-1/2 px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                   />
                 </div>
                 <textarea
+                  name="description"
+                  value={newNote.description}
+                  onChange={handleInputChange}
                   placeholder="Briefly describe the contents of these notes..."
                   rows="3"
                   className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors resize-none"
                 ></textarea>
                 <div className="flex justify-end">
-                  <button className="px-6 py-2.5 bg-[#6C5DD3] text-white rounded-xl text-sm font-semibold hover:bg-[#5a4db8] transition-colors">
+                  <button
+                    onClick={handleSaveNote}
+                    className="px-6 py-2.5 bg-[#6C5DD3] text-white rounded-xl text-sm font-semibold hover:bg-[#5a4db8] transition-colors"
+                  >
                     Save Note
                   </button>
                 </div>
@@ -206,13 +218,12 @@ export const NotesPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNotes.length > 0 ? (
             filteredNotes.map((note) => (
-              // Clicking anywhere on this card opens the PDF in a new tab
               <a
                 href={note.pdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 key={note.id}
-                className="group bg-[#25283B] rounded-2xl p-6 border border-white/5 hover:border-[#6C5DD3]/50 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(108,93,211,0.15)] transition-all cursor-pointer flex flex-col h-[280px]"
+                className="group bg-[#25283B] rounded-2xl p-6 border border-white/5 hover:border-[#6C5DD3]/50 hover:-translate-y-1 hover:shadow-[0_10px_30px_rgba(108,93,211,0.15)] transition-all cursor-pointer flex flex-col h-70"
               >
                 {/* Header: Tags & External Link Icon */}
                 <div className="flex justify-between items-start mb-4">
@@ -224,7 +235,6 @@ export const NotesPage = () => {
                       <Hash className="w-3 h-3" /> {note.topic}
                     </span>
                   </div>
-                  {/* Subtle external link icon that highlights on hover */}
                   <ExternalLink className="w-5 h-5 text-slate-500 group-hover:text-[#6C5DD3] transition-colors shrink-0 ml-2" />
                 </div>
 

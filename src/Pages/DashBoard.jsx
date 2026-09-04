@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Bell,
   ChevronDown,
@@ -44,7 +45,7 @@ const scheduleData = [
   },
 ];
 
-const examsData = [
+const fallbackExams = [
   {
     month: "MAY",
     day: "15",
@@ -60,14 +61,6 @@ const examsData = [
     time: "7 Days Left",
     color: "text-blue-400",
     bg: "bg-blue-500/20",
-  },
-  {
-    month: "MAY",
-    day: "28",
-    title: "Database Management",
-    time: "15 Days Left",
-    color: "text-green-400",
-    bg: "bg-green-500/20",
   },
 ];
 
@@ -130,6 +123,48 @@ const WeeklyChart = () => {
 };
 
 export const DashboardPage = () => {
+  const [userName, setUserName] = useState("Student");
+  const [upcomingExams, setUpcomingExams] = useState(fallbackExams);
+
+  useEffect(() => {
+    // 1. Fetch User Data
+    fetch("http://localhost:5000/api/dashboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.name) setUserName(data.name);
+      })
+      .catch((err) => console.error("Failed to fetch dashboard user", err));
+
+    // 2. Fetch Exam Data
+    fetch("http://localhost:5000/api/exams")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.upcomingExams) {
+          const formattedExams = data.upcomingExams.map((exam, idx) => {
+            const [month, day] = exam.date.split(" ");
+            const themeColors = [
+              { color: "text-purple-400", bg: "bg-purple-500/20" },
+              { color: "text-blue-400", bg: "bg-blue-500/20" },
+              { color: "text-green-400", bg: "bg-green-500/20" },
+              { color: "text-orange-400", bg: "bg-orange-500/20" },
+            ];
+            const theme = themeColors[idx % themeColors.length];
+
+            return {
+              month: month.toUpperCase(),
+              day: day,
+              title: exam.subject,
+              time: `${exam.daysLeft} Days Left`,
+              color: theme.color,
+              bg: theme.bg,
+            };
+          });
+          setUpcomingExams(formattedExams);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch exams", err));
+  }, []);
+
   return (
     <main
       className="flex-1 p-8 overflow-y-auto
@@ -146,7 +181,7 @@ export const DashboardPage = () => {
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            Welcome back, Student! <span className="text-2xl">👋</span>
+            Welcome back, {userName}! <span className="text-2xl">👋</span>
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             Here's what's happening with your semester.
@@ -211,7 +246,7 @@ export const DashboardPage = () => {
             {scheduleData.map((item, idx) => (
               <div key={idx} className="relative pl-6">
                 <div
-                  className={`absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ${item.color} ring-4 ring-[#1A1F2C]`}
+                  className={`absolute -left-1.25 top-1.5 w-2 h-2 rounded-full ${item.color} ring-4 ring-[#1A1F2C]`}
                 ></div>
                 <div className="flex gap-4">
                   <span className="text-sm font-medium text-slate-400 w-16 shrink-0">
@@ -239,7 +274,7 @@ export const DashboardPage = () => {
               Upcoming Exams
             </h2>
             <div className="space-y-4">
-              {examsData.map((exam, idx) => (
+              {upcomingExams.map((exam, idx) => (
                 <div key={idx} className="flex items-center gap-4 p-2">
                   <div
                     className={`w-14 h-14 rounded-xl flex flex-col items-center justify-center ${exam.bg}`}

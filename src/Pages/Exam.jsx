@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import {
   Target,
   TrendingUp,
@@ -6,73 +6,47 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
-  BookOpen,
   Award,
 } from "lucide-react";
 
 /* ==========================================================================
-   MOCK DATA & GPA LOGIC
+   FALLBACK DATA
    ========================================================================== */
-const gpaData = {
+const defaultGpaData = {
   currentGPA: 3.42,
   targetGPA: 3.8,
   creditsCompleted: 45,
   creditsThisSemester: 15,
 };
 
-// Mock upcoming exams with calculated required scores to meet the target
-const upcomingExams = [
-  {
-    id: 1,
-    subject: "Data Structures & Algorithms",
-    date: "Dec 15",
-    daysLeft: 5,
-    credits: 4,
-    requiredScore: 92,
-    gradeNeeded: "A",
-    status: "urgent", // triggers pink warning color
-  },
-  {
-    id: 2,
-    subject: "Machine Learning Foundations",
-    date: "Dec 18",
-    daysLeft: 8,
-    credits: 3,
-    requiredScore: 85,
-    gradeNeeded: "B+",
-    status: "warning", // triggers orange/purple color
-  },
-  {
-    id: 3,
-    subject: "Operating Systems",
-    date: "Dec 22",
-    daysLeft: 12,
-    credits: 4,
-    requiredScore: 88,
-    gradeNeeded: "B+",
-    status: "normal",
-  },
-  {
-    id: 4,
-    subject: "Database Management",
-    date: "Dec 28",
-    daysLeft: 18,
-    credits: 4,
-    requiredScore: 78,
-    gradeNeeded: "C+",
-    status: "normal",
-  },
-];
-
-const completedExams = [
-  { subject: "Calculus III", score: 94, grade: "A", credits: 4 },
-  { subject: "Physics II", score: 82, grade: "B", credits: 3 },
-];
-
-/* ==========================================================================
-   MAIN COMPONENT
-   ========================================================================== */
 export const ExamPage = () => {
+  const [gpaData, setGpaData] = useState(defaultGpaData);
+  const [upcomingExams, setUpcomingExams] = useState([]);
+  const [completedExams, setCompletedExams] = useState([]);
+
+  // Fetch data from backend on mount
+  useEffect(() => {
+    fetch("http://localhost:5000/api/exams")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.gpaData) setGpaData(data.gpaData);
+        if (data.upcomingExams) setUpcomingExams(data.upcomingExams);
+
+        // Map the backend columns to the properties expected by the completed exams UI
+        if (data.completedExams) {
+          const mappedCompleted = data.completedExams.map((exam) => ({
+            id: exam.id,
+            subject: exam.subject,
+            credits: exam.credits,
+            score: exam.requiredScore, // Using requiredScore as the final score for completed items
+            grade: exam.gradeNeeded, // Using gradeNeeded as the final grade achieved
+          }));
+          setCompletedExams(mappedCompleted);
+        }
+      })
+      .catch((err) => console.error("Failed to load exams", err));
+  }, []);
+
   return (
     <div
       className="
@@ -90,9 +64,7 @@ export const ExamPage = () => {
         {/* Header */}
         <div className="flex justify-between items-end mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white">
-              Exams & Targets
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Exams & Targets</h1>
             <p className="text-slate-400 text-xs">
               Track your deadlines and required scores to hit your GPA goal.
             </p>
@@ -159,7 +131,7 @@ export const ExamPage = () => {
 
         {/* Main Content Split */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column: Upcoming Exams (Takes up more space) */}
+          {/* Left Column: Upcoming Exams */}
           <div className="flex-1">
             <h3 className="text-lg font-bold mb-4 text-white flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#6C5DD3]" />
@@ -262,9 +234,14 @@ export const ExamPage = () => {
                 <AlertCircle className="w-5 h-5 text-orange-400 mt-0.5 shrink-0" />
                 <p className="text-xs text-slate-400 leading-relaxed">
                   To raise your GPA from{" "}
-                  <strong className="text-white">3.42</strong> to{" "}
-                  <strong className="text-white">3.80</strong> this semester,
-                  you must score an average of{" "}
+                  <strong className="text-white">
+                    {gpaData.currentGPA.toFixed(2)}
+                  </strong>{" "}
+                  to{" "}
+                  <strong className="text-white">
+                    {gpaData.targetGPA.toFixed(2)}
+                  </strong>{" "}
+                  this semester, you must score an average of{" "}
                   <strong className="text-[#FF75C3]">88.5%</strong> across all
                   remaining exams.
                 </p>
@@ -294,9 +271,9 @@ export const ExamPage = () => {
               </h3>
 
               <div className="space-y-4">
-                {completedExams.map((exam, idx) => (
+                {completedExams.map((exam) => (
                   <div
-                    key={idx}
+                    key={exam.id}
                     className="flex justify-between items-center bg-[#1A1D2D] p-3 rounded-xl border border-white/5"
                   >
                     <div className="flex items-center gap-3">

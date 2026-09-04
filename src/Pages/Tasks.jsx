@@ -1,117 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MoreHorizontal, CheckCircle2, RefreshCw } from "lucide-react";
 
 /* ==========================================================================
-   MOCK DATA
-   Matches the structure and content of your reference image exactly.
+   EMPTY BOARD STRUCTURE
+   The data will now be injected by the backend API.
    ========================================================================== */
-const initialBoard = {
-  todo: {
-    id: "todo",
-    title: "To Do",
-    tasks: [
-      {
-        id: "t1",
-        title: "Combinatorics and validity",
-        tag: "Working with data",
-        count: 5,
-      },
-      { id: "t2", title: "Hypothesis Testing", tag: "Research", count: 3 },
-      {
-        id: "t3",
-        title: "Time Series Analysis",
-        tag: "Working with data",
-        count: 6,
-      },
-      {
-        id: "t4",
-        title: "Clustering Algorithms",
-        tag: "Programming",
-        count: 2,
-      },
-    ],
-  },
-  inProgress: {
-    id: "inProgress",
-    title: "In Progress",
-    tasks: [
-      {
-        id: "t5",
-        title: "A/B Testing: Designing and Analyzing Experiments",
-        tag: "Working with data",
-        count: 3,
-      },
-      { id: "t6", title: "Data Visualization", tag: "Research", count: 5 },
-    ],
-  },
-  approval: {
-    id: "approval",
-    title: "Approval",
-    icon: (
-      <RefreshCw className="w-5 h-5 text-orange-400 bg-orange-400/10 p-1 rounded-full" />
-    ),
-    tasks: [
-      {
-        id: "t7",
-        title: "Principal Component Analysis",
-        tag: "Working with data",
-        count: 5,
-      },
-      {
-        id: "t8",
-        title: "Linear, Logistic, and Poisson Regression",
-        tag: "Programming",
-        count: 1,
-      },
-      {
-        id: "t9",
-        title: "One-Sample Test",
-        tag: "Working with data",
-        count: 2,
-      },
-    ],
-  },
-  completed: {
-    id: "completed",
-    title: "Completed",
-    icon: (
-      <CheckCircle2 className="w-5 h-5 text-cyan-400 bg-cyan-400/10 p-1 rounded-full" />
-    ),
-    tasks: [
-      { id: "t10", title: "Exponential Smoothing", tag: "Research", count: 4 },
-      {
-        id: "t11",
-        title: "Real-world Dataset",
-        tag: "Working with data",
-        count: 6,
-      },
-      {
-        id: "t12",
-        title: "Support Vector Machines",
-        tag: "Research",
-        count: 2,
-      },
-    ],
-  },
+const emptyBoard = {
+  todo: { id: "todo", title: "To Do", tasks: [] },
+  inProgress: { id: "inProgress", title: "In Progress", tasks: [] },
+  approval: { id: "approval", title: "Approval", tasks: [] },
+  completed: { id: "completed", title: "Completed", tasks: [] },
 };
 
 /* ==========================================================================
    MAIN COMPONENT
    ========================================================================== */
 export const TasksPage = () => {
-  const [columns, setColumns] = useState(initialBoard);
+  const [columns, setColumns] = useState(emptyBoard);
   const [activeDragCol, setActiveDragCol] = useState(null);
+
+  // 1. Fetch initial task data from the backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/tasks")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.todo) {
+          setColumns(data);
+        }
+      })
+      .catch((err) => console.error("Failed to load tasks", err));
+  }, []);
 
   // --- Drag and Drop Handlers ---
   const handleDragStart = (e, taskId, sourceColId) => {
-    // Store the task ID and where it came from in the drag event data
     e.dataTransfer.setData("taskId", taskId);
     e.dataTransfer.setData("sourceColId", sourceColId);
     e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e, targetColId) => {
-    // Prevent default to allow dropping
     e.preventDefault();
     setActiveDragCol(targetColId);
   };
@@ -128,20 +55,14 @@ export const TasksPage = () => {
     const taskId = e.dataTransfer.getData("taskId");
     const sourceColId = e.dataTransfer.getData("sourceColId");
 
-    // If dropped in the same column it started in, do nothing
     if (sourceColId === targetColId) return;
 
+    // 2. Optimistic UI update (move it instantly on screen)
     setColumns((prev) => {
       const sourceCol = prev[sourceColId];
       const targetCol = prev[targetColId];
-
-      // Find the task being moved
       const taskToMove = sourceCol.tasks.find((t) => t.id === taskId);
-
-      // Remove from source array
       const newSourceTasks = sourceCol.tasks.filter((t) => t.id !== taskId);
-
-      // Add to target array
       const newTargetTasks = [...targetCol.tasks, taskToMove];
 
       return {
@@ -150,10 +71,16 @@ export const TasksPage = () => {
         [targetColId]: { ...targetCol, tasks: newTargetTasks },
       };
     });
+
+    // 3. Send update to the backend database
+    fetch("http://localhost:5000/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: taskId, column_id: targetColId }),
+    }).catch((err) => console.error("Failed to sync task move", err));
   };
 
   return (
-    // Outer scrollable container perfectly sized for your main layout
     <div
       className="
       flex h-screen bg-[#1A1D2D] text-white font-sans p-10 
@@ -166,7 +93,7 @@ export const TasksPage = () => {
       transition-colors
     "
     >
-      <div className="min-w-max pb-10">
+      <div className="min-w-screen pb-10">
         <h1 className="text-3xl font-bold mb-8 text-white">Homework</h1>
 
         {/* Kanban Board Grid */}
@@ -174,12 +101,11 @@ export const TasksPage = () => {
           {Object.values(columns).map((column) => (
             <div
               key={column.id}
-              // Set up the drop zone on the entire column
               onDragOver={(e) => handleDragOver(e, column.id)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, column.id)}
               className={`
-                w-4/19 bg-[#25283B] rounded-2xl p-3.5 flex flex-col shrink-0 
+                w-4/22 bg-[#25283B] rounded-2xl p-3.5 flex flex-col shrink-0 
                 border-2 transition-colors duration-200 max-h-[80vh]
                 ${activeDragCol === column.id ? "border-[#6C5DD3]/50 bg-[#25283B]/80" : "border-white/5"}
               `}
@@ -189,7 +115,13 @@ export const TasksPage = () => {
                 <h2 className="text-lg font-bold text-slate-200">
                   {column.title}
                 </h2>
-                {column.icon && <div>{column.icon}</div>}
+                {/* Dynamically render icons based on column ID since JSON cannot store React icons */}
+                {column.id === "approval" && (
+                  <RefreshCw className="w-5 h-5 text-orange-400 bg-orange-400/10 p-1 rounded-full" />
+                )}
+                {column.id === "completed" && (
+                  <CheckCircle2 className="w-5 h-5 text-cyan-400 bg-cyan-400/10 p-1 rounded-full" />
+                )}
               </div>
 
               {/* Task Cards */}

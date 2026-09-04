@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronDown,
@@ -8,14 +9,39 @@ import {
 } from "lucide-react";
 
 export const CalendarPage = () => {
-  // Mock Attendance Data
-  const attendanceData = {
+  // 1. State for backend data (with fallbacks)
+  const [attendanceData, setAttendanceData] = useState({
     totalHeld: 45,
     totalAttended: 31,
-  };
+  });
 
-  // Math: Calculate additional consecutive days (x) needed to hit 75%
-  // Formula: (Attended + x) / (Held + x) = 0.75  =>  x = 3(Held) - 4(Attended)
+  const [upcomingClasses, setUpcomingClasses] = useState([
+    {
+      date: "Dec 25th",
+      title: "Calculus III",
+      time: "09:00 - 10:30 AM",
+      status: "Mandatory",
+    },
+    {
+      date: "Dec 26th",
+      title: "Data Structures",
+      time: "11:00 - 12:30 PM",
+      status: "Mandatory",
+    },
+  ]);
+
+  // 2. Fetch data from backend on load
+  useEffect(() => {
+    fetch("http://localhost:5000/api/calendar")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.attendance) setAttendanceData(data.attendance);
+        if (data.upcomingClasses) setUpcomingClasses(data.upcomingClasses);
+      })
+      .catch((err) => console.error("Failed to load calendar data", err));
+  }, []);
+
+  // Math: Calculate additional consecutive days needed to hit 75%
   const currentPercentage = (
     (attendanceData.totalAttended / attendanceData.totalHeld) *
     100
@@ -39,7 +65,6 @@ export const CalendarPage = () => {
   const calendarDays = Array.from({ length: 35 }, (_, i) => i + 1);
 
   return (
-    // FIX 1: Changed to h-full and overflow-y-auto, added custom scrollbar
     <div
       className="
       flex-1 h-full bg-[#1A1D2D] text-white font-sans p-8 overflow-y-auto
@@ -52,7 +77,6 @@ export const CalendarPage = () => {
       transition-colors
     "
     >
-      {/* FIX 2: Removed h-screen, added max-w-7xl, mx-auto, and pb-10 to prevent bottom cutoff */}
       <div className="w-full max-w-7xl py-2 flex gap-8 items-center ">
         {/* Left Column: Calendar UI */}
         <div className="flex-1">
@@ -87,7 +111,7 @@ export const CalendarPage = () => {
           {/* Calendar Grid */}
           <div className="grid grid-cols-7 gap-4">
             {calendarDays.map((day, idx) => {
-              const isWeekend = idx % 7 === 5 || idx % 7 === 6; // Sat or Sun
+              const isWeekend = idx % 7 === 5 || idx % 7 === 6;
               const isToday = day === 24;
               const isHoliday = day === 6;
 
@@ -108,7 +132,6 @@ export const CalendarPage = () => {
                     {day <= 31 ? day : ""}
                   </span>
 
-                  {/* Mock Activity Indicators */}
                   {day === 10 && (
                     <div className="absolute bottom-3 left-3 border-l-2 border-[#6C5DD3] pl-2">
                       <p className="text-[10px] text-slate-300">Physics Lab</p>
@@ -127,7 +150,7 @@ export const CalendarPage = () => {
         </div>
 
         {/* Right Column: Student Hub */}
-        <div className="w-[350px] flex flex-col gap-6">
+        <div className="w-87.5 flex flex-col gap-6">
           <button className="w-full py-3 bg-[#6C5DD3] rounded-xl font-semibold flex justify-center items-center gap-2 hover:bg-[#5a4db8] transition-colors shadow-[0_0_20px_rgba(108,93,211,0.3)]">
             <CalendarIcon className="w-5 h-5" />
             Sync Timetable
@@ -191,20 +214,7 @@ export const CalendarPage = () => {
             </h3>
 
             <div className="space-y-6">
-              {[
-                {
-                  date: "Dec 25th",
-                  title: "Calculus III",
-                  time: "09:00 - 10:30 AM",
-                  status: "Mandatory",
-                },
-                {
-                  date: "Dec 26th",
-                  title: "Data Structures",
-                  time: "11:00 - 12:30 PM",
-                  status: "Mandatory",
-                },
-              ].map((item, i) => (
+              {upcomingClasses.map((item, i) => (
                 <div
                   key={i}
                   className="relative pl-4 border-l-2 border-[#6C5DD3]"

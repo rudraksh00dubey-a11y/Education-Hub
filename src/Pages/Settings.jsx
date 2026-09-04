@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   Book,
@@ -12,6 +12,62 @@ import {
 
 export const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState("profile");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Form state to hold user settings[cite: 17]
+  const [formData, setFormData] = useState({
+    fullName: "Alex Student",
+    email: "alex@university.edu",
+    university: "Tech Institute of Future",
+    major: "Computer Science",
+    targetGpa: "3.8",
+    semester: "Fall 2024",
+    strictMode: true,
+  });
+
+  // 1. Fetch data from backend on mount
+  useEffect(() => {
+    fetch("http://localhost:5000/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (
+          data.success &&
+          data.settings &&
+          Object.keys(data.settings).length > 0
+        ) {
+          setFormData((prev) => ({ ...prev, ...data.settings }));
+        }
+      })
+      .catch((err) => console.error("Failed to load settings", err));
+  }, []);
+
+  // 2. Universal input handler for text, selects, and checkboxes
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  // 3. Save changes to backend
+  const handleSave = () => {
+    setIsSaving(true);
+    fetch("http://localhost:5000/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          // Optional: You could add a toast notification here
+          console.log("Settings successfully saved!");
+        }
+      })
+      .catch((err) => console.error("Failed to save settings", err))
+      .finally(() => setIsSaving(false));
+  };
 
   const tabs = [
     { id: "profile", label: "Personal Profile", icon: User },
@@ -38,9 +94,13 @@ export const SettingsPage = () => {
               Manage your profile, academic targets, and app preferences.
             </p>
           </div>
-          <button className="px-5 py-2.5 bg-[#6C5DD3] rounded-xl font-semibold flex items-center gap-2 hover:bg-[#5a4db8] transition-colors shadow-[0_0_20px_rgba(108,93,211,0.3)]">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-5 py-2.5 bg-[#6C5DD3] rounded-xl font-semibold flex items-center gap-2 hover:bg-[#5a4db8] transition-colors shadow-[0_0_20px_rgba(108,93,211,0.3)] disabled:opacity-70 disabled:cursor-not-allowed"
+          >
             <Save className="w-4 h-4" />
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
 
@@ -111,7 +171,9 @@ export const SettingsPage = () => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Alex Student"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                     />
                   </div>
@@ -121,7 +183,9 @@ export const SettingsPage = () => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Tech Institute of Future"
+                      name="university"
+                      value={formData.university}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                     />
                   </div>
@@ -131,7 +195,9 @@ export const SettingsPage = () => {
                     </label>
                     <input
                       type="text"
-                      defaultValue="Computer Science"
+                      name="major"
+                      value={formData.major}
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                     />
                   </div>
@@ -156,7 +222,9 @@ export const SettingsPage = () => {
                         <input
                           type="number"
                           step="0.1"
-                          defaultValue="3.8"
+                          name="targetGpa"
+                          value={formData.targetGpa}
+                          onChange={handleInputChange}
                           className="w-full pl-4 pr-10 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] transition-colors"
                         />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-bold">
@@ -168,9 +236,14 @@ export const SettingsPage = () => {
                       <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                         Current Semester
                       </label>
-                      <select className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] appearance-none">
-                        <option>Fall 2024</option>
-                        <option>Spring 2025</option>
+                      <select
+                        name="semester"
+                        value={formData.semester}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 bg-[#1A1D2D] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-[#6C5DD3] appearance-none"
+                      >
+                        <option value="Fall 2024">Fall 2024</option>
+                        <option value="Spring 2025">Spring 2025</option>
                       </select>
                     </div>
                   </div>
@@ -190,10 +263,12 @@ export const SettingsPage = () => {
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          defaultChecked
+                          name="strictMode"
+                          checked={formData.strictMode}
+                          onChange={handleInputChange}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-[#25283B] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF75C3]"></div>
+                        <div className="w-11 h-6 bg-[#25283B] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF75C3]"></div>
                       </label>
                     </div>
                   </div>
@@ -241,7 +316,7 @@ export const SettingsPage = () => {
                           defaultChecked
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-[#1A1D2D] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6C5DD3]"></div>
+                        <div className="w-11 h-6 bg-[#1A1D2D] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#6C5DD3]"></div>
                       </label>
                     </div>
                   ))}

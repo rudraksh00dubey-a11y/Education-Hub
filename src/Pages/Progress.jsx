@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   Flame,
@@ -24,7 +24,6 @@ import {
 } from "chart.js";
 import { Line, Radar, Doughnut } from "react-chartjs-2";
 
-// Register Chart.js components (Added ArcElement for Doughnut Chart)
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -38,7 +37,7 @@ ChartJS.register(
 );
 
 /* ==========================================================================
-   MOCK DATA
+   STATIC FALLBACK DATA
    ========================================================================== */
 const userStats = {
   level: 24,
@@ -63,38 +62,15 @@ const trajectoryData = {
   projected: [null, null, null, null, null, 88, 92, 95],
 };
 
-const subjectMetrics = {
-  labels: [
-    "Data Structures",
-    "Algorithms",
-    "Web Dev",
-    "Physics",
-    "Mathematics",
-  ],
-  notesCompletion: [95, 80, 100, 60, 85],
-  subjectMastery: [88, 70, 95, 55, 75],
-};
-
-// NEW: Extracurricular Time Distribution (Hours per week)
 const extracurricularData = {
   labels: ["Hackathons", "Robotics Club", "Sports", "Volunteering"],
   hours: [12, 8, 5, 3],
 };
 
-const milestones = [
-  {
-    id: 1,
-    title: "Mastered Data Structures",
-    date: "2 weeks ago",
-    status: "completed",
-  },
-  { id: 2, title: "Reached Level 20", date: "Last week", status: "completed" },
-  {
-    id: 3,
-    title: "Complete Midterm Algorithms",
-    date: "In Progress",
-    status: "current",
-  },
+const defaultMilestones = [
+  { id: 1, title: "Take First Quiz", date: "Pending", status: "upcoming" },
+  { id: 2, title: "Complete 5 Quizzes", date: "Pending", status: "upcoming" },
+  { id: 3, title: "Score 100% on a Quiz", date: "Pending", status: "upcoming" },
   {
     id: 4,
     title: "Target: 3.8 GPA",
@@ -177,13 +153,13 @@ const TrajectoryChart = () => {
   );
 };
 
-const SubjectMasteryChart = () => {
+const SubjectMasteryChart = ({ labels, masteryData }) => {
   const data = {
-    labels: subjectMetrics.labels,
+    labels: labels.length ? labels : ["No Data Yet"],
     datasets: [
       {
         label: "Notes Completion",
-        data: subjectMetrics.notesCompletion,
+        data: labels.map(() => 85),
         backgroundColor: "rgba(34, 211, 238, 0.2)",
         borderColor: "rgba(34, 211, 238, 1)",
         pointBackgroundColor: "rgba(34, 211, 238, 1)",
@@ -191,8 +167,8 @@ const SubjectMasteryChart = () => {
         borderWidth: 2,
       },
       {
-        label: "Subject Mastery",
-        data: subjectMetrics.subjectMastery,
+        label: "Subject Mastery (Quiz %)",
+        data: masteryData.length ? masteryData : [0],
         backgroundColor: "rgba(255, 117, 195, 0.2)",
         borderColor: "rgba(255, 117, 195, 1)",
         pointBackgroundColor: "rgba(255, 117, 195, 1)",
@@ -241,19 +217,13 @@ const SubjectMasteryChart = () => {
   );
 };
 
-// NEW: Extracurricular Doughnut Chart
 const ExtracurricularChart = () => {
   const data = {
     labels: extracurricularData.labels,
     datasets: [
       {
         data: extracurricularData.hours,
-        backgroundColor: [
-          "#6C5DD3", // Purple
-          "#22D3EE", // Cyan
-          "#FF75C3", // Pink
-          "#FB923C", // Orange
-        ],
+        backgroundColor: ["#6C5DD3", "#22D3EE", "#FF75C3", "#FB923C"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -263,7 +233,7 @@ const ExtracurricularChart = () => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    cutout: "75%", // Makes it a thin ring
+    cutout: "75%",
     plugins: {
       legend: {
         position: "bottom",
@@ -278,11 +248,6 @@ const ExtracurricularChart = () => {
         backgroundColor: "#0B0F19",
         borderColor: "rgba(255,255,255,0.1)",
         borderWidth: 1,
-        callbacks: {
-          label: function (context) {
-            return ` ${context.label}: ${context.raw} hrs/wk`;
-          },
-        },
       },
     },
   };
@@ -290,7 +255,6 @@ const ExtracurricularChart = () => {
   return (
     <div className="h-64 w-full mt-4 relative">
       <Doughnut data={data} options={options} />
-      {/* Center Text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
         <span className="text-2xl font-bold text-white">28</span>
         <span className="text-[10px] text-slate-400 uppercase tracking-wider">
@@ -305,7 +269,63 @@ const ExtracurricularChart = () => {
    MAIN COMPONENT
    ========================================================================== */
 export const ProgressPage = () => {
+  const [radarLabels, setRadarLabels] = useState([]);
+  const [radarMastery, setRadarMastery] = useState([]);
+  const [milestones, setMilestones] = useState(defaultMilestones);
+
   const xpPercentage = (userStats.currentXP / userStats.requiredXP) * 100;
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/dashboard")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.progress) {
+          // 1. Map dynamic database data to Radar Chart[cite: 16]
+          const subjectTotals = {};
+          let perfectScoreAchieved = false;
+
+          data.progress.forEach((p) => {
+            if (!subjectTotals[p.subject]) {
+              subjectTotals[p.subject] = { score: 0, total: 0 };
+            }
+            subjectTotals[p.subject].score += p.score;
+            subjectTotals[p.subject].total += p.total;
+            if (p.score === p.total && p.total > 0) perfectScoreAchieved = true;
+          });
+
+          const labels = Object.keys(subjectTotals);
+          const mastery = labels.map((l) =>
+            Math.round((subjectTotals[l].score / subjectTotals[l].total) * 100),
+          );
+
+          setRadarLabels(labels);
+          setRadarMastery(mastery);
+
+          // 2. Unlock milestones dynamically based on DB rows[cite: 16]
+          const quizCount = data.progress.length;
+          const updatedMilestones = [...defaultMilestones];
+
+          if (quizCount >= 1) {
+            updatedMilestones[0].status = "completed";
+            updatedMilestones[0].date = "Recently";
+            updatedMilestones[1].status = "current";
+          }
+          if (quizCount >= 5) {
+            updatedMilestones[1].status = "completed";
+            updatedMilestones[1].date = "Recently";
+          }
+          if (perfectScoreAchieved) {
+            updatedMilestones[2].status = "completed";
+            updatedMilestones[2].date = "Recently";
+          }
+
+          setMilestones(updatedMilestones);
+        }
+      })
+      .catch((err) =>
+        console.error("Failed to fetch progress from backend", err),
+      );
+  }, []);
 
   return (
     <div
@@ -317,7 +337,6 @@ export const ProgressPage = () => {
     "
     >
       <div className="w-full max-w-7xl mx-auto pb-10">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">
             Progress & Trajectory
@@ -328,12 +347,11 @@ export const ProgressPage = () => {
           </p>
         </div>
 
-        {/* Top Stats: Level & Streak */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-2 bg-[#25283B] p-6 rounded-2xl border border-white/5 flex flex-col justify-center">
             <div className="flex justify-between items-end mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#6C5DD3] to-purple-800 rounded-xl flex items-center justify-center border border-[#6C5DD3]/50 shadow-[0_0_15px_rgba(108,93,211,0.3)]">
+                <div className="w-12 h-12 bg-linear-to-br from-[#6C5DD3] to-purple-800 rounded-xl flex items-center justify-center border border-[#6C5DD3]/50 shadow-[0_0_15px_rgba(108,93,211,0.3)]">
                   <span className="text-xl font-black text-white">
                     {userStats.level}
                   </span>
@@ -359,7 +377,7 @@ export const ProgressPage = () => {
             </div>
             <div className="w-full bg-[#1A1D2D] rounded-full h-3 border border-white/5 overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-cyan-400 to-[#6C5DD3] rounded-full relative"
+                className="h-full bg-linear-to-r from-cyan-400 to-[#6C5DD3] rounded-full relative"
                 style={{ width: `${xpPercentage}%` }}
               >
                 <div className="absolute top-0 right-0 bottom-0 w-10 bg-white/20 animate-pulse rounded-full blur-[2px]"></div>
@@ -379,7 +397,6 @@ export const ProgressPage = () => {
           </div>
         </div>
 
-        {/* Middle Section: Trajectory Chart & Weekly Consistency */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           <div className="lg:col-span-2 bg-[#25283B] p-6 rounded-2xl border border-white/5">
             <div className="flex justify-between items-center mb-2">
@@ -404,7 +421,6 @@ export const ProgressPage = () => {
             <p className="text-xs text-slate-400 mb-6">
               Hit your daily goals to maintain your score.
             </p>
-
             <div className="flex-1 flex flex-col justify-center items-center mb-6">
               <div className="relative w-32 h-32 flex items-center justify-center mb-4">
                 <svg className="w-full h-full transform -rotate-90">
@@ -461,18 +477,20 @@ export const ProgressPage = () => {
           </div>
         </div>
 
-        {/* Bottom Section: 3-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Subject Mastery Radar Chart */}
           <div className="bg-[#25283B] p-6 rounded-2xl border border-white/5">
             <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
               <BrainCircuit className="w-5 h-5 text-cyan-400" /> Subject Mastery
             </h3>
-            <p className="text-xs text-slate-400 mb-2">Notes vs Exam Mastery</p>
-            <SubjectMasteryChart />
+            <p className="text-xs text-slate-400 mb-2">
+              Based on actual quiz scores.
+            </p>
+            <SubjectMasteryChart
+              labels={radarLabels}
+              masteryData={radarMastery}
+            />
           </div>
 
-          {/* NEW: Extracurricular Doughnut Chart */}
           <div className="bg-[#25283B] p-6 rounded-2xl border border-white/5">
             <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
               <Activity className="w-5 h-5 text-purple-400" /> Extracurriculars
@@ -483,7 +501,6 @@ export const ProgressPage = () => {
             <ExtracurricularChart />
           </div>
 
-          {/* Milestone Progression */}
           <div className="bg-[#25283B] p-6 rounded-2xl border border-white/5">
             <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
               <Milestone className="w-5 h-5 text-orange-400" /> Milestones
@@ -493,7 +510,7 @@ export const ProgressPage = () => {
               {milestones.map((step) => (
                 <div key={step.id} className="relative pl-8">
                   <div
-                    className={`absolute -left-[17px] top-0 w-8 h-8 rounded-full border-4 border-[#25283B] flex items-center justify-center ${step.status === "completed" ? "bg-[#6C5DD3] text-white" : step.status === "current" ? "bg-[#FF75C3] text-white shadow-[0_0_15px_rgba(255,117,195,0.5)]" : "bg-[#1A1D2D] text-slate-500 border-white/10"}`}
+                    className={`absolute -left-4.25 top-0 w-8 h-8 rounded-full border-4 border-[#25283B] flex items-center justify-center ${step.status === "completed" ? "bg-[#6C5DD3] text-white" : step.status === "current" ? "bg-[#FF75C3] text-white shadow-[0_0_15px_rgba(255,117,195,0.5)]" : "bg-[#1A1D2D] text-slate-500 border-white/10"}`}
                   >
                     {step.status === "completed" ? (
                       <CheckCircle2 className="w-4 h-4" />
