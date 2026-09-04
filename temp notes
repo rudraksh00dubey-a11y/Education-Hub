@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>{{subject}} Notes</title>
+
+<style>
+
+body {
+    font-family:Arial;
+    background:#f5f7fb;
+    padding:30px;
+}
+
+.container {
+    max-width:900px;
+    margin:auto;
+}
+
+.notes {
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 5px 20px rgba(0,0,0,.1);
+    white-space:pre-line;
+    line-height:1.8;
+}
+
+.button {
+    display:inline-block;
+    background:#4f46e5;
+    color:white;
+    padding:12px 20px;
+    border-radius:8px;
+    text-decoration:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📚 {{subject}} Notes</h1>
+
+<div class="notes">
+{{notes}}
+</div>
+
+<br>
+
+<a
+    class="button"
+    href="/quiz/{{subject}}"
+>
+Take Quiz →
+</a>
+
+</div>
+
+</body>
+
+</html>
