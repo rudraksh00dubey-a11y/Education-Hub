@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Create Account</title>
+
+    <style>
+
+        body {
+            font-family:Arial;
+            background:#eef2ff;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+
+        .box {
+            background:white;
+            padding:40px;
+            width:350px;
+            border-radius:15px;
+            box-shadow:0 10px 30px rgba(0,0,0,.15);
+        }
+
+        input {
+            width:100%;
+            padding:12px;
+            margin:10px 0;
+            box-sizing:border-box;
+        }
+
+        button {
+            width:100%;
+            padding:12px;
+            background:#4f46e5;
+            color:white;
+            border:none;
+            border-radius:8px;
+        }
+
+        .error {
+            color:red;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>🎓 Create Account</h1>
+
+    {% if error %}
+        <p class="error">{{error}}</p>
+    {% endif %}
+
+    <form method="POST">
+
+        <input
+            name="name"
+            placeholder="Full Name"
+            required
+        >
+
+        <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+        >
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            required
+        >
+
+        <button>
+            Register
+        </button>
+
+    </form>
+
+    <p>
+        Already have an account?
+        <a href="/login">Login</a>
+    </p>
+
+</div>
+
+</body>
+
+</html>
