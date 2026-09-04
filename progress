@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>My Progress</title>
+
+<style>
+
+body {
+    font-family:Arial;
+    background:#f5f7fb;
+    padding:30px;
+}
+
+.container {
+    max-width:900px;
+    margin:auto;
+}
+
+table {
+    width:100%;
+    background:white;
+    border-collapse:collapse;
+    box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+
+th, td {
+    padding:15px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+
+th {
+    background:#4f46e5;
+    color:white;
+}
+
+a {
+    display:inline-block;
+    margin-top:20px;
+    padding:12px 20px;
+    background:#4f46e5;
+    color:white;
+    text-decoration:none;
+    border-radius:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📊 My Learning Progress</h1>
+
+<table>
+
+<tr>
+    <th>Subject</th>
+    <th>Score</th>
+    <th>Total</th>
+    <th>Percentage</th>
+</tr>
+
+{% for record in records %}
+
+<tr>
+
+<td>
+    {{record.subject}}
+</td>
+
+<td>
+    {{record.score}}
+</td>
+
+<td>
+    {{record.total}}
+</td>
+
+<td>
+    {{(record.score / record.total * 100)|round(1)}}%
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<a href="/dashboard">
+    ← Dashboard
+</a>
+
+</div>
+
+</body>
+
+</html>
