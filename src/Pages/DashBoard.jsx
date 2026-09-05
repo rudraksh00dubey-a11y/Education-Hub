@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Bell,
   ChevronDown,
@@ -11,6 +12,8 @@ import {
   Square,
   Plus,
   Minus,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -57,10 +60,11 @@ const WeeklyChart = ({ weeklyData }) => {
     scales: {
       y: {
         beginAtZero: true,
+        suggestedMax: 1, // Forces the Y-axis to reach at least 1 hour
         ticks: {
           color: "#64748b",
-          stepSize: 2,
-          font: { size: 10 },
+          stepSize: 1, // Adjusted to 1 for better scaling
+          precision: 0, // Strictly prevents decimal values on the axis (e.g., 0.5h)
           callback: (value) => `${value}h`,
         },
         grid: { display: false },
@@ -80,9 +84,8 @@ const WeeklyChart = ({ weeklyData }) => {
         cornerRadius: 8,
         callbacks: {
           label: (context) => {
-            const totalHours = context.raw || 0;
-            const h = Math.floor(totalHours);
-            const m = Math.round((totalHours - h) * 60);
+            const h = Math.floor(context.raw || 0);
+            const m = Math.round(((context.raw || 0) - h) * 60);
             return ` ${h} hr ${m} min`;
           },
         },
@@ -91,18 +94,26 @@ const WeeklyChart = ({ weeklyData }) => {
   };
 
   return (
-    <div className="h-48 w-full mt-4">
+    <div className="h-60 w-full mt-4">
       <Bar data={data} options={options} />
     </div>
   );
 };
 
-export const DashboardPage = ({ timerState, timerControls }) => {
+export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
   const [userName, setUserName] = useState("");
+  const [semester, setSemester] = useState("Loading...");
   const [schedule, setSchedule] = useState([]);
   const [upcomingExams, setUpcomingExams] = useState([]);
   const [weeklyData, setWeeklyData] = useState([0, 0, 0, 0, 0, 0, 0]);
   const [totalStudyHours, setTotalStudyHours] = useState(0);
+
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  const [showSemesterDropdown, setShowSemesterDropdown] = useState(false);
+  const [userLevel, setUserLevel] = useState(1);
 
   const {
     inputHours = 0,
@@ -122,15 +133,48 @@ export const DashboardPage = ({ timerState, timerControls }) => {
     handleStop = () => {},
   } = timerControls || {};
 
+  const currentYear = new Date().getFullYear();
+  const indianSemesters = [
+    `Even Semester (Jan-May) ${currentYear}`,
+    `Odd Semester (July-Dec) ${currentYear}`,
+    `Even Semester (Jan-May) ${currentYear + 1}`,
+    `Odd Semester (July-Dec) ${currentYear + 1}`,
+  ];
+
   const fetchDashboardData = () => {
     fetch("http://localhost:5000/api/dashboard")
       .then((res) => res.json())
       .then((data) => {
         if (data.name) setUserName(data.name);
+
+        // Fix: Pull active_semester directly from backend injection
+        if (data.active_semester) {
+          setSemester(data.active_semester);
+        }
+
         if (data.weekly_data) setWeeklyData(data.weekly_data);
         if (data.total_week_hours !== undefined)
           setTotalStudyHours(data.total_week_hours);
-        if (data.schedule) setSchedule(data.schedule);
+
+        // Fix: Truncate schedule to top 3 items
+        if (data.schedule) setSchedule(data.schedule.slice(0, 4));
+
+        if (data.notifications) {
+          setNotifications(data.notifications);
+          const currentSignature = data.notifications
+            .map((n) => n.title)
+            .join("|");
+          const savedSignature = sessionStorage.getItem("seenNotifs");
+
+          if (
+            data.notifications.length > 0 &&
+            currentSignature !== savedSignature
+          ) {
+            setHasUnread(true);
+          } else if (data.notifications.length === 0) {
+            setHasUnread(false);
+          }
+        }
       })
       .catch(console.error);
 
@@ -139,7 +183,7 @@ export const DashboardPage = ({ timerState, timerControls }) => {
       .then((data) => {
         if (data.upcomingExams) {
           const formattedExams = data.upcomingExams.map((exam, idx) => {
-            const [month, day] = exam.date.split(" ");
+            const [month, day] = exam.date.split("-").slice(1, 3);
             const themeColors = [
               { color: "text-purple-400", bg: "bg-purple-500/20" },
               { color: "text-blue-400", bg: "bg-blue-500/20" },
@@ -147,17 +191,31 @@ export const DashboardPage = ({ timerState, timerControls }) => {
               { color: "text-orange-400", bg: "bg-orange-500/20" },
             ];
             const theme = themeColors[idx % themeColors.length];
+            const daysLeft = Math.ceil(
+              (new Date(exam.date) - new Date()) / (1000 * 60 * 60 * 24),
+            );
             return {
-              month: month.toUpperCase(),
+              month: new Date(exam.date)
+                .toLocaleString("default", { month: "short" })
+                .toUpperCase(),
               day,
               title: exam.subject,
-              time: `${exam.daysLeft} Days Left`,
+              time: `${daysLeft} Days Left`,
               color: theme.color,
               bg: theme.bg,
             };
           });
-          setUpcomingExams(formattedExams);
+
+          // Fix: Truncate upcoming exams to top 3 items
+          setUpcomingExams(formattedExams.slice(0, 3));
         }
+      })
+      .catch(console.error);
+
+    fetch("http://localhost:5000/api/progress")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.stats) setUserLevel(data.stats.level);
       })
       .catch(console.error);
   };
@@ -165,6 +223,42 @@ export const DashboardPage = ({ timerState, timerControls }) => {
   useEffect(() => {
     fetchDashboardData();
   }, [refreshKey]);
+
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && hasUnread) {
+      setHasUnread(false);
+      const currentSignature = notifications.map((n) => n.title).join("|");
+      sessionStorage.setItem("seenNotifs", currentSignature);
+    }
+  };
+
+  const handleSemesterChange = async (newSem) => {
+    if (
+      !window.confirm(
+        `Changing your semester will switch your active workspace and hide data from the current term. Are you sure you want to proceed to ${newSem}?`,
+      )
+    )
+      return;
+
+    setSemester(newSem);
+    setShowSemesterDropdown(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/settings");
+      const data = await res.json();
+      if (data.success) {
+        const updatedSettings = { ...data.settings, semester: newSem };
+        await fetch("http://localhost:5000/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedSettings),
+        });
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Failed to update semester", e);
+    }
+  };
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -194,24 +288,86 @@ export const DashboardPage = ({ timerState, timerControls }) => {
     totalTimeSeconds > 0 ? (440 * timeLeft) / totalTimeSeconds : 440;
 
   return (
-    <main className="flex-1 p-8 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-700/50 [&::-webkit-scrollbar-thumb]:rounded-full">
+    <main className="flex-1 p-8 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-700/50 [&::-webkit-scrollbar-thumb]:rounded-full relative">
       <header className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            Welcome back, {userName || "Student"}! 👋
+            Welcome back, {userName}! 👋
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             Here's what's happening with your semester.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="w-10 h-10 rounded-full bg-[#1A1F2C] flex items-center justify-center border border-white/5 text-slate-400 hover:text-white transition-colors">
+        <div className="flex items-center gap-4 relative">
+          <button
+            onClick={toggleNotifications}
+            className="relative w-10 h-10 rounded-full bg-[#1A1F2C] flex items-center justify-center border border-white/5 text-slate-400 hover:text-white transition-colors"
+          >
             <Bell className="w-5 h-5" />
+            {hasUnread && (
+              <span className="absolute top-0 right-0 w-3 h-3 bg-[#FF75C3] rounded-full ring-2 ring-[#1A1D2D]"></span>
+            )}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1A1F2C] border border-white/5 text-sm font-medium hover:bg-white/5 transition-colors">
-            Spring 2024
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setShowSemesterDropdown(!showSemesterDropdown)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1A1F2C] border border-white/5 text-sm font-medium hover:bg-white/5 transition-colors"
+            >
+              {semester} <ChevronDown className="w-4 h-4 text-slate-400" />
+            </button>
+
+            {showSemesterDropdown && (
+              <div className="absolute top-12 right-0 w-64 bg-[#25283B] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="p-3 border-b border-white/5 font-bold text-xs text-slate-400 uppercase tracking-wider">
+                  Select Semester
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  {indianSemesters.map((sem) => (
+                    <button
+                      key={sem}
+                      onClick={() => handleSemesterChange(sem)}
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-white/5 ${semester === sem ? "text-[#6C5DD3] font-bold bg-[#6C5DD3]/10" : "text-slate-300"}`}
+                    >
+                      {sem}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {showNotifications && (
+            <div className="absolute top-14 right-0 w-80 bg-[#25283B] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 border-b border-white/5 font-bold text-white flex justify-between items-center">
+                Notifications
+                <span className="text-xs bg-[#6C5DD3] px-2 py-0.5 rounded text-white">
+                  {notifications.length} Active
+                </span>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((n, i) => (
+                    <div
+                      key={i}
+                      className="p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors cursor-default"
+                    >
+                      <p
+                        className={`text-xs font-bold mb-1 ${n.type === "urgent" ? "text-[#FF75C3]" : n.type === "warning" ? "text-orange-400" : "text-[#6C5DD3]"}`}
+                      >
+                        {n.title}
+                      </p>
+                      <p className="text-sm text-slate-300">{n.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-slate-500 text-sm">
+                    You are all caught up!
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -240,14 +396,18 @@ export const DashboardPage = ({ timerState, timerControls }) => {
           color="text-green-400"
           iconBg="bg-green-500/20"
         />
-        <StatCard
-          icon={Target}
-          title="Progress"
-          value="75%"
-          subtitle="Overall"
-          color="text-orange-400"
-          iconBg="bg-orange-500/20"
-        />
+        <div className="bg-[#1A1F2C] p-6 rounded-2xl flex flex-col justify-between border border-white/5">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-orange-500/20">
+            <Target className="w-5 h-5 text-orange-400" />
+          </div>
+          <div>
+            <p className="text-slate-400 text-sm font-medium mb-1">
+              Rank Level
+            </p>
+            <h3 className="text-3xl font-bold text-white mb-1">{userLevel}</h3>
+            <p className="text-slate-500 text-xs">Keep learning!</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
@@ -286,9 +446,15 @@ export const DashboardPage = ({ timerState, timerControls }) => {
             </div>
           </div>
           <div>
-            <button className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors">
-              View Full Calendar
-            </button>
+            {/* Fix: Click routes to Calendar */}
+            <Link to={"/Calendar"}>
+              <button
+                onClick={() => setActiveTab("calendar")}
+                className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors"
+              >
+                View Full Calendar
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -329,9 +495,15 @@ export const DashboardPage = ({ timerState, timerControls }) => {
             </div>
           </div>
           <div>
-            <button className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors">
-              View All Exams
-            </button>
+            {/* Fix: Click routes to Exams */}
+            <Link to={"/Exams"}>
+              <button
+                onClick={() => setActiveTab("exams")}
+                className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors"
+              >
+                View All Exams
+              </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -373,7 +545,6 @@ export const DashboardPage = ({ timerState, timerControls }) => {
                     </button>
                   </div>
                 </div>
-
                 <div className="flex flex-col items-center">
                   <span className="text-[10px] text-slate-400 font-bold mb-1 tracking-wider">
                     MIN

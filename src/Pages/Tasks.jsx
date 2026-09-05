@@ -137,7 +137,7 @@ export const TasksPage = () => {
         {/* Header Section */}
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Homework</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Tasks</h1>
             {lastWeekPerf && (
               <p className="text-sm text-green-400 font-medium bg-green-400/10 px-3 py-1.5 rounded-lg inline-block border border-green-400/20">
                 Performance: You completed {lastWeekPerf.completed_count} tasks
@@ -145,12 +145,6 @@ export const TasksPage = () => {
               </p>
             )}
           </div>
-          <button
-            onClick={openAddModal}
-            className="px-5 py-2.5 bg-[#6C5DD3] hover:bg-[#5a4db8] text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-[#6C5DD3]/20"
-          >
-            <Plus className="w-4 h-4" /> Add Task
-          </button>
         </div>
 
         {/* Kanban Board Grid */}
