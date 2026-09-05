@@ -7,7 +7,7 @@ import datetime
 import uuid
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["[https://education-hub-jade.vercel.app/](https://education-hub-jade.vercel.app/)"])
+CORS(app, supports_credentials=True, origins=["[https://education-hub-jade.vercel.app](https://education-hub-jade.vercel.app)"])
 
 DATABASE = "engineering_hub.db"
 

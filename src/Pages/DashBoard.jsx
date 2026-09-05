@@ -12,8 +12,6 @@ import {
   Square,
   Plus,
   Minus,
-  AlertCircle,
-  Info,
 } from "lucide-react";
 import {
   Chart as ChartJS,
