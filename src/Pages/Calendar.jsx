@@ -38,9 +38,7 @@ export const CalendarPage = () => {
   });
 
   const loadCalendarData = () => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar",
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/calendar")
       .then((res) => res.json())
       .then((data) => {
         if (data.events) setEvents(data.events);
@@ -70,7 +68,7 @@ export const CalendarPage = () => {
     if (!newEvent.title) return;
     try {
       await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/event",
+        "https://RudrakshDubey.pythonanywhere.com/api/calendar/event",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -93,7 +91,7 @@ export const CalendarPage = () => {
     if (!newClass.title || !newClass.date) return;
     try {
       await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/event",
+        "https://RudrakshDubey.pythonanywhere.com/api/calendar/event",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -111,7 +109,7 @@ export const CalendarPage = () => {
   const handleMarkAttendance = async (status) => {
     try {
       await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/attendance",
+        "https://RudrakshDubey.pythonanywhere.com/api/calendar/attendance",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

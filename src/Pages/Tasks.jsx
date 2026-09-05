@@ -24,9 +24,7 @@ export const TasksPage = () => {
   });
 
   const loadTasks = () => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/tasks",
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/tasks")
       .then((res) => res.json())
       .then((data) => {
         if (data && data.board) {
@@ -47,14 +45,11 @@ export const TasksPage = () => {
     const method = modalMode === "add" ? "POST" : "PUT";
 
     try {
-      await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/tasks/crud",
-        {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        },
-      );
+      await fetch("https://RudrakshDubey.pythonanywhere.com/api/tasks/crud", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
       setIsModalOpen(false);
       loadTasks();
     } catch (e) {
@@ -65,14 +60,11 @@ export const TasksPage = () => {
   const handleDeleteTask = async (id) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
     try {
-      await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/tasks/crud",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        },
-      );
+      await fetch("https://RudrakshDubey.pythonanywhere.com/api/tasks/crud", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
       setIsModalOpen(false);
       loadTasks();
     } catch (e) {
@@ -132,14 +124,11 @@ export const TasksPage = () => {
       };
     });
 
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/tasks",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: taskId, column_id: targetColId }),
-      },
-    ).catch((err) => console.error("Failed to sync task move", err));
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: taskId, column_id: targetColId }),
+    }).catch((err) => console.error("Failed to sync task move", err));
   };
 
   return (

@@ -50,9 +50,7 @@ export const SettingsPage = () => {
   });
 
   useEffect(() => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/settings")
       .then((res) => res.json())
       .then((data) => {
         if (
@@ -92,14 +90,11 @@ export const SettingsPage = () => {
 
   const handleSave = () => {
     setIsSaving(true);
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      },
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
       .then(() => setIsSaving(false))
       .catch(() => setIsSaving(false));
   };
@@ -113,7 +108,7 @@ export const SettingsPage = () => {
       return;
     try {
       const res = await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/clear-data",
+        "https://RudrakshDubey.pythonanywhere.com/api/clear-data",
         {
           method: "POST",
         },
@@ -150,7 +145,7 @@ export const SettingsPage = () => {
   const handleExport = async () => {
     try {
       const res = await fetch(
-        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/export",
+        "https://RudrakshDubey.pythonanywhere.com/api/export",
       );
       const data = await res.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -177,7 +172,7 @@ export const SettingsPage = () => {
       try {
         const payload = JSON.parse(event.target.result);
         const res = await fetch(
-          "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/import",
+          "https://RudrakshDubey.pythonanywhere.com/api/import",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

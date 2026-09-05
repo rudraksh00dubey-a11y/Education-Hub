@@ -48,9 +48,7 @@ export const ResourcePage = () => {
   });
 
   const loadResources = () => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/resources",
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/resources")
       .then((res) => res.json())
       .then((data) => setResources(data))
       .catch((err) => console.error("Failed to load resources", err));
@@ -65,14 +63,11 @@ export const ResourcePage = () => {
     if (!formData.title || !formData.url || !formData.subject) return;
     const method = modalMode === "add" ? "POST" : "PUT";
 
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/resources/crud",
-      {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      },
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/resources/crud", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
       .then(() => {
         loadResources();
         setIsModalOpen(false);
@@ -83,28 +78,22 @@ export const ResourcePage = () => {
   const handleDeleteResource = (id) => {
     if (!window.confirm("Are you sure you want to delete this resource?"))
       return;
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/resources/crud",
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      },
-    ).then(() => {
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/resources/crud", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).then(() => {
       loadResources();
       setIsModalOpen(false);
     });
   };
 
   const toggleComplete = (res) => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/resources/crud",
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...res, isCompleted: !res.isCompleted }),
-      },
-    ).then(() => loadResources());
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/resources/crud", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...res, isCompleted: !res.isCompleted }),
+    }).then(() => loadResources());
   };
 
   const openModal = (mode, resource = null) => {

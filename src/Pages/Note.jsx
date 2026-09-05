@@ -36,9 +36,7 @@ export const NotesPage = () => {
   });
 
   const loadNotes = () => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/notes",
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/notes")
       .then((res) => res.json())
       .then((data) => setNotes(data))
       .catch((err) => console.error("Failed to load notes", err));
@@ -76,14 +74,11 @@ export const NotesPage = () => {
     if (!formData.title || !formData.subject || !formData.topic) return;
     const method = modalMode === "add" ? "POST" : "PUT";
 
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/notes/crud",
-      {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      },
-    )
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/notes/crud", {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
       .then(() => {
         loadNotes();
         setIsModalOpen(false);
@@ -93,28 +88,22 @@ export const NotesPage = () => {
 
   const handleDeleteNote = (id) => {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/notes/crud",
-      {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      },
-    ).then(() => {
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/notes/crud", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).then(() => {
       loadNotes();
       setIsModalOpen(false);
     });
   };
 
   const toggleComplete = (note) => {
-    fetch(
-      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/notes/crud",
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...note, isCompleted: !note.isCompleted }),
-      },
-    ).then(() => loadNotes());
+    fetch("https://RudrakshDubey.pythonanywhere.com/api/notes/crud", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...note, isCompleted: !note.isCompleted }),
+    }).then(() => loadNotes());
   };
 
   const openModal = (mode, note = null) => {
