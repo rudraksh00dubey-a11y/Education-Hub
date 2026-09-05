@@ -100,7 +100,7 @@ const WeeklyChart = ({ weeklyData }) => {
   );
 };
 
-export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
+export const DashboardPage = ({ timerState, timerControls }) => {
   const [userName, setUserName] = useState("");
   const [semester, setSemester] = useState("Loading...");
   const [schedule, setSchedule] = useState([]);
@@ -157,7 +157,7 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
           setTotalStudyHours(data.total_week_hours);
 
         // Fix: Truncate schedule to top 3 items
-        if (data.schedule) setSchedule(data.schedule.slice(0, 4));
+        if (data.schedule) setSchedule(data.schedule.slice(0, 3));
 
         if (data.notifications) {
           setNotifications(data.notifications);
@@ -448,10 +448,7 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
           <div>
             {/* Fix: Click routes to Calendar */}
             <Link to={"/Calendar"}>
-              <button
-                onClick={() => setActiveTab("calendar")}
-                className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors"
-              >
+              <button className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors">
                 View Full Calendar
               </button>
             </Link>
@@ -497,10 +494,7 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
           <div>
             {/* Fix: Click routes to Exams */}
             <Link to={"/Exams"}>
-              <button
-                onClick={() => setActiveTab("exams")}
-                className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors"
-              >
+              <button className="w-full mt-8 py-3 rounded-xl bg-white/5 text-sm font-medium text-purple-400 hover:bg-white/10 transition-colors">
                 View All Exams
               </button>
             </Link>
