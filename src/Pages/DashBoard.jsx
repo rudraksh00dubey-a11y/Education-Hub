@@ -157,7 +157,7 @@ export const DashboardPage = ({ timerState, timerControls }) => {
           setTotalStudyHours(data.total_week_hours);
 
         // Fix: Truncate schedule to top 3 items
-        if (data.schedule) setSchedule(data.schedule.slice(0, 3));
+        if (data.schedule) setSchedule(data.schedule.slice(0, 4));
 
         if (data.notifications) {
           setNotifications(data.notifications);
