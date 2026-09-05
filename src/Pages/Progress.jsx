@@ -207,7 +207,9 @@ export const ProgressPage = () => {
   const [weeklyStudyHours, setWeeklyStudyHours] = useState(0);
 
   const loadProgress = () => {
-    fetch("http://localhost:5000/api/progress")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/progress",
+    )
       .then((res) => res.json())
       .then((json) => {
         setData(json);
@@ -215,7 +217,9 @@ export const ProgressPage = () => {
       });
 
     // Fetch dashboard to calculate consistency against goal
-    fetch("http://localhost:5000/api/dashboard")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/dashboard",
+    )
       .then((res) => res.json())
       .then((dash) => setWeeklyStudyHours(dash.total_week_hours || 0));
   };
@@ -225,11 +229,14 @@ export const ProgressPage = () => {
   }, []);
 
   const handleUpdateGoal = () => {
-    fetch("http://localhost:5000/api/progress/goal", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal: goalInput }),
-    }).then(() => {
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/progress/goal",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal: goalInput }),
+      },
+    ).then(() => {
       setIsEditingGoal(false);
       loadProgress();
     });

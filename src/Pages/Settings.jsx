@@ -50,7 +50,9 @@ export const SettingsPage = () => {
   });
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/settings")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (
@@ -90,11 +92,14 @@ export const SettingsPage = () => {
 
   const handleSave = () => {
     setIsSaving(true);
-    fetch("http://localhost:5000/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      },
+    )
       .then(() => setIsSaving(false))
       .catch(() => setIsSaving(false));
   };
@@ -107,9 +112,12 @@ export const SettingsPage = () => {
     )
       return;
     try {
-      const res = await fetch("http://localhost:5000/api/clear-data", {
-        method: "POST",
-      });
+      const res = await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/clear-data",
+        {
+          method: "POST",
+        },
+      );
       if (res.ok) {
         sessionStorage.clear();
         localStorage.clear();
@@ -141,7 +149,9 @@ export const SettingsPage = () => {
 
   const handleExport = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/export");
+      const res = await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/export",
+      );
       const data = await res.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], {
         type: "application/json",
@@ -166,11 +176,14 @@ export const SettingsPage = () => {
     reader.onload = async (event) => {
       try {
         const payload = JSON.parse(event.target.result);
-        const res = await fetch("http://localhost:5000/api/import", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(
+          "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/import",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
         if (res.ok) window.location.reload();
       } catch (err) {
         alert("Invalid backup file. Import failed.");

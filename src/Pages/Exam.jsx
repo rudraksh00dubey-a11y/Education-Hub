@@ -33,7 +33,9 @@ export const ExamPage = () => {
   });
 
   const loadExams = () => {
-    fetch("http://localhost:5000/api/exams")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/exams",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.gpaData) setAnalysis(data.gpaData);
@@ -52,11 +54,14 @@ export const ExamPage = () => {
     const method = modalMode === "add" ? "POST" : "PUT";
 
     try {
-      await fetch("http://localhost:5000/api/exams/crud", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/exams/crud",
+        {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        },
+      );
       setIsModalOpen(false);
       loadExams();
     } catch (e) {
@@ -67,11 +72,14 @@ export const ExamPage = () => {
   const handleDeleteExam = async (id) => {
     if (!window.confirm("Delete this exam record?")) return;
     try {
-      await fetch("http://localhost:5000/api/exams/crud", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
+      await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/exams/crud",
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        },
+      );
       setIsModalOpen(false);
       loadExams();
     } catch (e) {

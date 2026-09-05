@@ -96,11 +96,14 @@ export default function StudyDashboard() {
 
     if (elapsedHours > 0) {
       try {
-        await fetch("http://localhost:5000/api/study-time", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ hours: elapsedHours }),
-        });
+        await fetch(
+          "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/study-time",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ hours: elapsedHours }),
+          },
+        );
         // Trigger a dashboard refresh once the DB updates
         setRefreshKey((prev) => prev + 1);
       } catch (e) {

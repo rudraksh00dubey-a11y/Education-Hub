@@ -38,7 +38,9 @@ export const CalendarPage = () => {
   });
 
   const loadCalendarData = () => {
-    fetch("http://localhost:5000/api/calendar")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.events) setEvents(data.events);
@@ -67,15 +69,18 @@ export const CalendarPage = () => {
   const handleSaveModalEvent = async () => {
     if (!newEvent.title) return;
     try {
-      await fetch("http://localhost:5000/api/calendar/event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newEvent,
-          date: selectedDayContext.dateStr,
-          time: "",
-        }),
-      });
+      await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/event",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...newEvent,
+            date: selectedDayContext.dateStr,
+            time: "",
+          }),
+        },
+      );
       loadCalendarData();
       setIsModalOpen(false);
       setNewEvent({ type: "Event", title: "" });
@@ -87,11 +92,14 @@ export const CalendarPage = () => {
   const handleAddClass = async () => {
     if (!newClass.title || !newClass.date) return;
     try {
-      await fetch("http://localhost:5000/api/calendar/event", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "Class", ...newClass }),
-      });
+      await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/event",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "Class", ...newClass }),
+        },
+      );
       loadCalendarData();
       // Resets everyday for new entries
       setNewClass({ date: todayStr, title: "", time: "" });
@@ -102,11 +110,14 @@ export const CalendarPage = () => {
 
   const handleMarkAttendance = async (status) => {
     try {
-      await fetch("http://localhost:5000/api/calendar/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDayContext.dateStr, status }),
-      });
+      await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/calendar/attendance",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date: selectedDayContext.dateStr, status }),
+        },
+      );
       loadCalendarData();
       setIsModalOpen(false);
     } catch (e) {

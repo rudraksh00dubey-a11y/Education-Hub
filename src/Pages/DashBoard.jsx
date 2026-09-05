@@ -142,7 +142,9 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
   ];
 
   const fetchDashboardData = () => {
-    fetch("http://localhost:5000/api/dashboard")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/dashboard",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.name) setUserName(data.name);
@@ -178,7 +180,9 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
       })
       .catch(console.error);
 
-    fetch("http://localhost:5000/api/exams")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/exams",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.upcomingExams) {
@@ -212,7 +216,9 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
       })
       .catch(console.error);
 
-    fetch("http://localhost:5000/api/progress")
+    fetch(
+      "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/progress",
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.stats) setUserLevel(data.stats.level);
@@ -244,15 +250,20 @@ export const DashboardPage = ({ timerState, timerControls, setActiveTab }) => {
     setSemester(newSem);
     setShowSemesterDropdown(false);
     try {
-      const res = await fetch("http://localhost:5000/api/settings");
+      const res = await fetch(
+        "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
+      );
       const data = await res.json();
       if (data.success) {
         const updatedSettings = { ...data.settings, semester: newSem };
-        await fetch("http://localhost:5000/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedSettings),
-        });
+        await fetch(
+          "[https://RudrakshDubey.pythonanywhere.com](https://RudrakshDubey.pythonanywhere.com)/api/settings",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedSettings),
+          },
+        );
         window.location.reload();
       }
     } catch (e) {
