@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   Clock,
   AlertCircle,
   X,
@@ -224,7 +223,7 @@ export const CalendarPage = () => {
                   </span>
 
                   {/* FIXED: Constrained height and hidden scrollbar prevents grid breaking */}
-                  <div className="mt-1 space-y-1 max-h-[50px] overflow-y-auto [&::-webkit-scrollbar]:hidden pb-2">
+                  <div className="mt-1 space-y-1 max-h-12.5 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-2">
                     {dayEvents.map((ev, i) => (
                       <p
                         key={i}
@@ -249,7 +248,7 @@ export const CalendarPage = () => {
         </div>
 
         {/* Right Column: Student Hub */}
-        <div className="w-[350px] flex flex-col gap-6">
+        <div className="w-87.5 flex flex-col gap-6">
           <div className="bg-[#25283B] rounded-2xl p-6 border border-white/5">
             <h3 className="text-lg font-bold mb-6 text-white border-b border-white/10 pb-4">
               Attendance Hub
