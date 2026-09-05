@@ -132,7 +132,6 @@ export default function StudyDashboard() {
       <div className="flex w-screen h-screen bg-[#121624] overflow-hidden shadow-2xl border border-white/5">
         <Sidebar />
         <Routes>
-          <Route path="/" />
           <Route index element={<Navigate to="/Dashboard" replace />} />
           <Route
             path="/Dashboard"
