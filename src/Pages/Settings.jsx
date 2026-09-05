@@ -68,6 +68,31 @@ export const SettingsPage = () => {
       .catch((err) => console.error("Failed to save settings", err))
       .finally(() => setIsSaving(false));
   };
+  const handleClearData = async () => {
+    // 1. Ask for confirmation before deleting everything
+    if (
+      !window.confirm(
+        "Are you sure you want to completely erase all your data? This action cannot be undone.",
+      )
+    )
+      return;
+
+    try {
+      // 2. Send the delete request to the backend
+      const res = await fetch("http://localhost:5000/api/clear-data", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        // 3. Clear browser memory and force a hard reload to reset the UI
+        sessionStorage.clear();
+        localStorage.clear();
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error("Failed to clear data:", err);
+    }
+  };
 
   const tabs = [
     { id: "profile", label: "Personal Profile", icon: User },
@@ -130,7 +155,10 @@ export const SettingsPage = () => {
               </button>
             ))}
 
-            <button className="w-full flex items-center gap-3 px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium border border-transparent hover:border-red-500/20">
+            <button
+              onClick={handleClearData}
+              className="w-full flex items-center gap-3 px-4 py-3 mt-4 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors text-sm font-medium border border-transparent hover:border-red-500/20"
+            >
               <Trash className="w-4 h-4" />
               Clear Data
             </button>
